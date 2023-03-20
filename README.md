@@ -1,7 +1,7 @@
 # Jukido Jujutsu Stance Application
 This is a hobby project that was built for fun to see what could be accomplished with pose recognition software.  A lot of code was borrowed from other example projects:
-  https://medium.com/@leahnagy/yoga-pose-classification-with-tensorflows-movenet-model-3e5771fda292
-  https://www.kaggle.com/code/venkatkumar001/yoga-pose-recognition-mediapipe
+* https://medium.com/@leahnagy/yoga-pose-classification-with-tensorflows-movenet-model-3e5771fda292
+* https://www.kaggle.com/code/venkatkumar001/yoga-pose-recognition-mediapipe
 
 
 Fundamentally the application contains two parts:
