@@ -1,5 +1,5 @@
 # Jukido Jujutsu Stance Application
-This is a hobby project that was built for fun to see what could be accomplished with pose recognition software.  A lot of code was borrowed from other example projects:
+This is a hobby project that was built for fun to see what could be accomplished with pose recognition software.  A lot of code was borrowed and adapted from other example projects:
 * https://medium.com/@leahnagy/yoga-pose-classification-with-tensorflows-movenet-model-3e5771fda292
 * https://www.kaggle.com/code/venkatkumar001/yoga-pose-recognition-mediapipe
 
@@ -15,7 +15,7 @@ The pose classifier contains a number of python scripts that can be executed ind
 
 * **split_video.py** - Splits a video into individual images
 * **dataaugmentation.py** - Generates new images from the split images with zoom and mirror transformations
-* **mediapipe_buildcsv.py** - Converts the images into poses by [using mediapipe's pose estimation model](https://google.github.io/mediapipe/solutions/pose.html).  The data is stored into a csv file.
+* **mediapipe_buildcsv.py** - Converts the images into poses [using mediapipe's pose estimation model](https://google.github.io/mediapipe/solutions/pose.html).  The data is stored as a CSV file.
 * **mediapipe_classifier.py** - Uses the CSV files to train a neural network using keras and then converts the model to tflite format.
 
 ## Stances App
