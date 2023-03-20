@@ -1,0 +1,415 @@
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <script>
+  var CLOSURE_NO_DEPS = true;
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1640029074/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.6.1629159505/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils_3d@0.3.1635987963/control_utils_3d.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1635988162/pose.js" crossorigin="anonymous"></script>
+  
+  
+  <!-- Require the peer dependencies of pose-detection. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+
+<!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite/dist/tf-tflite.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+  
+  <script type="module">
+const videoElement = document.getElementsByClassName('input_video')[0];
+const canvasElement = document.getElementsByClassName('output_canvas')[0];
+const canvasCtx = canvasElement.getContext('2d');
+const landmarkContainer = document.getElementsByClassName('landmark-grid-container')[0];
+const grid = new LandmarkGrid(landmarkContainer);
+var textElement = document.getElementById('text');
+var stanceListElement = document.getElementById('stanceList');
+var keypoints;
+var enableOverlay = false;
+var stanceSelect = document.getElementById('stanceSelect');
+var stanceImage = document.getElementById('stanceImage');
+var appMode = 'tell';
+var showModeSelectedStance = 0;
+var showStanceCorrectCounter = 0;
+
+function onResults(results) {
+  if (!results.poseLandmarks) {
+    grid.updateLandmarks([]);
+    return;
+  }
+  
+  canvasElement.width = videoElement.videoWidth;
+  canvasElement.height = videoElement.videoHeight;
+
+  canvasCtx.save();
+  if(enableOverlay){
+	  canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+	  canvasCtx.drawImage(results.segmentationMask, 0, 0,
+						  canvasElement.width, canvasElement.height);
+
+	  // Only overwrite existing pixels.
+	  canvasCtx.globalCompositeOperation = 'source-in';
+	  canvasCtx.fillStyle = '#00FF00';
+	  canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+
+	  // Only overwrite missing pixels.
+	  canvasCtx.globalCompositeOperation = 'destination-atop';
+	  canvasCtx.drawImage(
+      results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+  
+	  canvasCtx.globalCompositeOperation = 'source-over';
+	  drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS,
+					 {color: '#00FF00', lineWidth: 4});
+	  drawLandmarks(canvasCtx, results.poseLandmarks,
+					{color: '#FF0000', lineWidth: 2});
+	  
+	  grid.updateLandmarks(results.poseWorldLandmarks);
+  }
+  else {
+	canvasCtx.drawImage(camera.video, 0, 0, canvasElement.width, canvasElement.height);
+  }
+  canvasCtx.restore();
+
+  
+  
+  keypoints = results.poseLandmarks;
+}
+
+function predictPose()
+{
+	if(typeof(keypoints) == 'undefined')
+		return;
+		
+	var modelInput = []
+	for(var i = 0; i<keypoints.length; i++){
+		var point = keypoints[i];
+		modelInput.push(point.x);
+		modelInput.push(point.y);
+		modelInput.push(point.z);
+		modelInput.push(point.visibility);
+	}
+	
+	// Run the inference.
+	var tensor = tf.tensor([modelInput]);
+	var labels = poseList;
+	var prediction = tfliteModel.predict(tensor);
+	
+	var predictions = [prediction.data()];
+	for(var i = 0; i<poseList.length; i++){
+		predictions.push(binaryModels[poseList[i]].predict(tensor).data());
+	}
+	
+	return Promise.all(predictions).then(function(results)
+	{
+		//console.log(result);
+		//Retrieve whichever prediction is the highest
+		var result = results[0];
+		var largest = -1
+		var largestIndex = -1;
+		for(var i = 0; i<result.length;i++){
+			if(largest < result[i])
+			{
+				largest = result[i];
+				largestIndex = i;
+			}
+		}
+		//textElement.textContent = labels[largestIndex] + " (" + Math.ceil(largest * 100) + "%)";
+		
+		//Check if the binary model agrees:
+		var count = 0;
+		var matches = false;
+		var matchValue;
+		var stances = [];
+		for(var i = 0; i<poseList.length; i++){
+			result = results[i+1];
+			if(result[0] > 0.5)
+			{
+				if(i == largestIndex && result[0] > 0.8)
+				{
+					matches = true;
+					matchValue = result[0];
+				}
+				stances.push({index: i, value: result[0]});
+				count++;
+			}
+		}
+		hideGreenBorder(stanceImage);
+		hideRedBorder(stanceImage);
+		hideYellowBorder(stanceImage);
+		if(appMode == 'tell')
+		{
+			if(count > 1)//ambiguous result; more than one positive match
+			{
+				textElement.textContent = 'Ambiguous Stance '
+				for(var j = 0; j<stances.length; j++)
+				{
+					textElement.textContent += '\r\n' + labels[stances[j].index] + " (" + Math.ceil(stances[j].value * 100) + "%)";
+				}
+				textElement.textContent += '\r\n' + 'Predicted: ' + labels[largestIndex] + " (" + Math.ceil(largest * 100) + "%)"
+			}
+			else if(!matches)
+			{
+				textElement.textContent = 'Unknown Stance.  Best guess: '  + labels[largestIndex] + " (" + Math.ceil(largest * 100) + "%)";
+			}
+			else {
+				textElement.textContent = labels[largestIndex] + " (" + Math.ceil(largest * 100) + "%)" + "[" + Math.ceil(matchValue * 100) + "%]";
+			}
+		}
+		else
+		{
+			if(count == 1 && matches && largestIndex == showModeSelectedStance){
+				showStanceCorrectCounter++;
+				textElement.textContent = labels[largestIndex] + " (" + Math.ceil(largest * 100) + "%)" + "[" + Math.ceil(matchValue * 100) + "%]";
+				if(Math.ceil(largest * 100) < 80){
+					textElement.textContent += '\r\n Match must be higher than 80%';
+					showYellowBorder(stanceImage);
+				}
+				else {
+					if(showStanceCorrectCounter > 2)
+						showGreenBorder(stanceImage);
+					else showYellowBorder(stanceImage);
+				}
+			}
+			else {
+				showStanceCorrectCounter = 0;
+				showRedBorder(stanceImage);
+				textElement.textContent = "Incorrect Stance!"
+			}
+		}
+	});
+}
+
+const pose = new Pose({locateFile: (file) => {
+  return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+}});
+pose.setOptions({
+  modelComplexity: 1,
+  smoothLandmarks: true,
+  enableSegmentation: true,
+  smoothSegmentation: true,
+  minDetectionConfidence: 0.5,
+  minTrackingConfidence: 0.5
+});
+pose.onResults(onResults);
+
+const camera = new Camera(videoElement, {
+	onFrame: async () => {
+		await pose.send({image: videoElement});
+	},
+	width: 1280,
+	height: 720,
+	facingMode: {
+		ideal: 'user'
+	}
+});
+
+tflite.loadTFLiteModel('tfliteModels/pose_classifier_.tflite').then(function(model){
+	tfliteModel = model;
+});
+
+var tfliteModel; 
+var interval;
+export function runScript(){
+	camera.start();
+	
+	textElement.textContent = "Loading..."
+	
+	if(typeof(interval) != 'undefined')
+		clearInterval(interval);
+	interval = setInterval(predictPose, 2000);
+}
+window.runScript=runScript;
+
+export function stopScript(){
+	camera.stop();
+	
+	clearInterval(interval);
+	
+	textElement.textContent = "This application requires the usage of your camera.  Click begin to turn on your camera.  This app does not upload any of your data.  All calculations are performed on the client."
+	
+	canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+}
+window.stopScript=stopScript;
+
+export function changeFacing(value){
+	camera.stop();
+	camera.h.facingMode.ideal = value;
+	camera.start();
+}
+window.changeFacing=changeFacing;
+
+export function toggleOverlay(checked){
+	enableOverlay = checked;
+}
+window.toggleOverlay=toggleOverlay;
+
+export function changeMode(mode){
+	appMode = mode;
+	textElement.textContent = "";
+	if(appMode == 'show'){
+		show(stanceSelect);
+		show(stanceImage);
+		hide(stanceList);
+		stanceSelection(stanceSelect.options[stanceSelect.selectedIndex].value)
+	}
+	else if(appMode == 'tell'){
+		hide(stanceSelect);
+		hide(stanceImage);
+		show(stanceList);
+	}
+}
+window.changeMode=changeMode;
+
+export function stanceSelection(stanceIndex){
+	stanceImage.src = "senseiStances/sensei_"+poseList[stanceIndex]+".jpg";
+	showModeSelectedStance = stanceIndex;
+	showStanceCorrectCounter = 0;
+}
+window.stanceSelection=stanceSelection;
+
+function show(element){
+	element.classList.remove('hidden');
+}
+function hide(element){
+	element.classList.add('hidden');
+}
+function showGreenBorder(element){
+	element.classList.add('greenborder');
+}
+function hideGreenBorder(element){
+	element.classList.remove('greenborder');
+}
+function showRedBorder(element){
+	element.classList.add('redborder');
+}
+function hideRedBorder(element){
+	element.classList.remove('redborder');
+}
+function showYellowBorder(element){
+	element.classList.add('yellowborder');
+}
+function hideYellowBorder(element){
+	element.classList.remove('yellowborder');
+}
+
+async function loadFile(url) {
+  try {
+    const response = await fetch(url);
+    const data = await response.text();
+	return data;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+var poses = await loadFile('labels/pose_labels_.txt');
+var poseList = poses.split('\r\n');
+
+stanceListElement.textContent = "Stances considered: " + poseList.join(', ');
+
+var binaryModels = {};
+for(var i = 0; i<poseList.length; i++)
+{
+	var modelLoader = function (modelName){
+		tflite.loadTFLiteModel('tfliteModels/pose_classifier_' + modelName + '.tflite').then(function(model){
+			binaryModels[modelName] = model;
+		});
+	}
+	
+	modelLoader(poseList[i]);
+	
+	stanceSelect.options[stanceSelect.options.length] = new Option(poseList[i], i);
+}
+
+</script>
+
+<style>
+#jukidostances p, #jukidostances button, #jukidostances select, #jukidostances{
+	font-size:32px
+}
+
+#jukidostances .block{
+	display:block;
+}
+
+#jukidostances input, #jukidostances label {
+	vertical-align: middle;
+}
+
+#jukidostances .line-break{
+	white-space: pre-wrap;
+}
+
+#jukidostances .landmark-grid-container {
+	height: 250px;
+}
+
+#jukidostances .hidden, #jukidostances .landmark-grid-container span{
+	display: none;
+}
+
+#jukidostances #actions > * {
+	margin: 5px;
+}
+
+#jukidostances #stanceImage{
+	height: 1280px;
+	width: 720px;
+}
+
+#jukidostances .greenborder {
+	border: 20px solid;
+    border-color: green;
+}
+#jukidostances .redborder {
+	border: 20px solid;
+    border-color: red;
+}
+#jukidostances .yellowborder {
+	border: 20px solid;
+    border-color: yellow;
+}
+
+</style>
+
+</head>
+
+<body>
+	<div id="jukidostances">
+		<div id="actions">
+			<button onClick="runScript()">Begin</button>
+			<button onClick="stopScript()">End</button>
+			<div id="cameraoptions">
+				<select class="block" onchange="changeFacing(this.options[this.selectedIndex].value)">
+					<option value="user">Front Camera</option>
+					<option value="environment">Rear Camera</option>
+				</select>
+				<input type="checkbox" id="overlaycheckbox" onClick="toggleOverlay(this.checked)" value="1">
+				<label for="overlaycheckbox">Show Overlay</label><br>
+			</div>
+			<select class="block" onchange="changeMode(this.options[this.selectedIndex].value)">
+				<option value="tell">Tell - Predict the stance</option>
+				<option value="show">Show - Match the stance</option>
+			</select>
+			<select id="stanceSelect" onchange="stanceSelection(this.options[this.selectedIndex].value)" class="hidden">
+			</select>
+		</div>
+		
+		<div class="container">
+			<p id="stanceList"></p>
+			<p id="text" class="line-break">This application requires the usage of your camera.  Click begin to turn on your camera.  This app does not upload any of your data.  All calculations are performed on the client.</p>
+			<img id="stanceImage" class="hidden"></img>
+			<video class="input_video hidden"></video>
+			<canvas class="output_canvas"></canvas>
+			<div class="hidden landmark-grid-container"></div>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+*.txt
+*.tflite
+*.pyc
+*.vsidx
+*.lock
+*.suo
+*.testlog
+*.manifest
+*.user
+*.data-*
+*.index
+*.pb
+*.hdf5
