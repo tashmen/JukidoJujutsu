@@ -2,6 +2,7 @@ from mediapipe_common import *
 
 split = True
 bootstrap = split
+includeAugments = False
 # Required structure of the images_in_folder:
 #
 #   fitness_poses_images_in/
@@ -22,8 +23,9 @@ bootstrap_images_out_folder = 'D:/JukidoStanceImages/jukido_stances_out'
 bootstrap_csvs_out_folder = bootstrap_images_out_folder
 
 if split:
-    split_into_train_test(bootstrap_images_in_folder, bootstrap_images_out_folder, 0.25)
-    split_into_train_test(bootstrap_aug_images_in_folder, bootstrap_images_out_folder, 0.25)
+    split_into_train_test(bootstrap_images_in_folder, bootstrap_images_out_folder, 0.20)
+    if includeAugments:
+        split_into_train_test(bootstrap_aug_images_in_folder, bootstrap_images_out_folder, 0.20)
 
 # Initialize helper.
 train_folder = '/train'
@@ -53,11 +55,7 @@ def bootstrap(bootstrap_helper):
 
     # After initial bootstrapping images without detected poses were still saved in
     # the folderd (but not in the CSVs) for debug purpose. Let's remove them.
-    bootstrap_helper.align_images_and_csvs(print_removed_items=False)
-    bootstrap_helper.print_images_out_statistics()
-
-    # Align CSVs with filtered images.
-    bootstrap_helper.align_images_and_csvs(print_removed_items=False)
+    bootstrap_helper.align_images_and_csvs(print_removed_items=True)
     bootstrap_helper.print_images_out_statistics()
 
 if bootstrap:

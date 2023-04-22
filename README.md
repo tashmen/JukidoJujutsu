@@ -14,7 +14,7 @@ The web application is currently deployed on a free server located here: http://
 The pose classifier contains a number of python scripts that can be executed individually.  Each script performs a particular transformation that ultimately converts videos into a neural network that can predict stances.
 
 * **split_video.py** - Splits a video into individual images
-* **dataaugmentation.py** - Generates new images from the split images with zoom and mirror transformations (expiremental)
+* **dataaugmentation.py** - Generates new images from the split images with zoom and mirror transformations (experimental)
 * **mediapipe_buildcsv.py** - Converts the images into poses [using mediapipe's pose estimation model](https://google.github.io/mediapipe/solutions/pose.html).  The data is stored as a CSV file.
 * **mediapipe_classifier.py** - Uses the CSV files to train a neural network using keras and then converts the model to tflite format.
 

@@ -1,4 +1,5 @@
 import math
+import joblib
 from random import random
 import cv2
 from matplotlib import pyplot as plt
@@ -10,6 +11,7 @@ import tqdm
 import csv
 import tensorflow as tf
 import itertools
+from threading import Lock
 
 from mediapipe.python.solutions import drawing_utils as mp_drawing
 from mediapipe.python.solutions import pose as mp_pose
@@ -54,9 +56,10 @@ class BootstrapHelper(object):
     if not os.path.exists(self._csvs_out_folder):
       os.makedirs(self._csvs_out_folder)
 
-    for pose_class_name in self._pose_class_names:
-      print('Bootstrapping ', pose_class_name, file=sys.stderr)
-
+    lock = Lock()
+    joblib.Parallel(n_jobs=7, prefer="threads")(joblib.delayed(self.bootstrapInternal)(per_pose_class_limit, pose_class_name, i, lock) for i, pose_class_name in enumerate(self._pose_class_names))
+    #for pose_class_name in self._pose_class_names:
+  def bootstrapInternal(self, per_pose_class_limit, pose_class_name, position, lock):
       # Paths for the pose class.
       images_in_folder = os.path.join(self._images_in_folder, pose_class_name)
       images_out_folder = os.path.join(self._images_out_folder, pose_class_name)
@@ -64,20 +67,27 @@ class BootstrapHelper(object):
       if not os.path.exists(images_out_folder):
         os.makedirs(images_out_folder)
 
-      with open(csv_out_path, 'w', newline='') as csv_out_file:
-        csv_out_writer = csv.writer(csv_out_file, delimiter=',', quoting=csv.QUOTE_MINIMAL)
-        csv_reader = csv.reader(csv_out_file, delimiter=',')
-        
-        # Get list of images.
-        image_names = sorted([n for n in os.listdir(images_in_folder) if not n.startswith('.')])
-        if per_pose_class_limit is not None:
-          image_names = image_names[:per_pose_class_limit]
+       # Get list of images.
+      image_names = sorted([n for n in os.listdir(images_in_folder) if not n.startswith('.')])
+      if per_pose_class_limit is not None:
+        image_names = image_names[:per_pose_class_limit]
 
-        for row in csv_reader:
-            image_names.remove(row[0]);
+      totalImages = len(image_names)
+      
+
+      if os.path.exists(csv_out_path):
+          with open(csv_out_path) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            for row in csv_reader:
+                image_names.remove(row[0]);
+      with lock:
+        print('Bootstrapping ', pose_class_name, " Total Images: ", totalImages, " Images to bootstrap: ", len(image_names))
+
+      with open(csv_out_path, 'a', newline='') as csv_out_file:
+        csv_out_writer = csv.writer(csv_out_file, delimiter=',', quoting=csv.QUOTE_MINIMAL)
 
         # Bootstrap every image.
-        for image_name in tqdm.tqdm(image_names):
+        for image_name in image_names:
           # Load image.
           input_frame = cv2.imread(os.path.join(images_in_folder, image_name))
           input_frame = cv2.cvtColor(input_frame, cv2.COLOR_BGR2RGB)
@@ -433,6 +443,7 @@ class FullBodyPoseEmbedder(object):
     reshaped_inputs = keras.layers.Reshape((33, 4))(landmarks_and_visibility)
 
     landmarks = self._normalize_pose_landmarks(reshaped_inputs[:, :, :3])
+    
     #Visibility cannot be included because whether or not the hands are over the hips should not matter, but this is affecting whether or not musubi is selected....
     #landmarks = tf.keras.layers.Concatenate(axis=2)([landmarks, reshaped_inputs[:, :, 3:4]])
 
@@ -440,7 +451,7 @@ class FullBodyPoseEmbedder(object):
     # only use the lower body points.
     tf.keras.layers.Flatten
     embedding = keras.layers.Flatten()(landmarks[:,23:,:])
-
+    '''
     points = reshaped_inputs[:, :, :3]
     normalizedPoints = landmarks[:, :, :3]
     
@@ -487,6 +498,7 @@ class FullBodyPoseEmbedder(object):
     
     #embedding = tf.keras.layers.Concatenate(axis=1)([embedding, leftFootAngle1])
     #embedding = keras.layers.Flatten()(embedding)
+    '''
     return embedding
   def compute_distance(self, a, b):
     return tf.linalg.norm((a - b), axis=1, keepdims=True)
@@ -811,13 +823,17 @@ def split_into_train_test(images_origin, images_dest, test_split):
   os.makedirs(TRAIN_DIR, exist_ok=True)
   os.makedirs(TEST_DIR, exist_ok=True)
 
-  for dir in dirs:
+  joblib.Parallel(n_jobs=7)(joblib.delayed(split_into_train_test_internal)(dir, TRAIN_DIR, TEST_DIR, images_origin, test_split) for dir in dirs)
+  print(f'Your split dataset is in "{images_dest}"')
+
+def split_into_train_test_internal(dir, TRAIN_DIR, TEST_DIR, images_origin, test_split):
+  #for dir in dirs:
     # Get all filenames for this dir, filtered by filetype
     filenames = os.listdir(os.path.join(images_origin, dir))
     filenames = [os.path.join(images_origin, dir, f) for f in filenames if (
-        f.endswith('.png') or f.endswith('.jpg') or f.endswith('.jpeg') or f.endswith('.bmp') 
-        or not os.path.exists(os.path.join(TEST_DIR, dir, f)) 
-        or not os.path.exists(os.path.join(TRAIN_DIR, dir, f)))]
+        (f.endswith('.png') or f.endswith('.jpg') or f.endswith('.jpeg') or f.endswith('.bmp'))
+        and (not os.path.exists(os.path.join(TEST_DIR, dir, f)) 
+        and not os.path.exists(os.path.join(TRAIN_DIR, dir, f))))]
     # Shuffle the files, deterministically
     filenames.sort()
     random.seed(42)
@@ -833,7 +849,7 @@ def split_into_train_test(images_origin, images_dest, test_split):
         destination = os.path.join(TRAIN_DIR, dir, os.path.split(file)[1])
       shutil.copyfile(file, destination)
     print(f'Moved {test_count} of {len(filenames)} from class "{dir}" into test.')
-  print(f'Your split dataset is in "{images_dest}"')
+  
 
 
 def plot_confusion_matrix(cm, classes,

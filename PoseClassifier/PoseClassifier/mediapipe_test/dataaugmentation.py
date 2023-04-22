@@ -10,6 +10,7 @@ from tensorflow.keras.utils import load_img
 from tensorflow.keras.utils import img_to_array
 from tensorflow.keras.utils import array_to_img
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from PIL import Image
 
 def produce_images(className):
 	outputClassDirectory = outputDirectory+ '/' + className
@@ -19,25 +20,31 @@ def produce_images(className):
 
 	for inputClassImage in os.scandir(inputClassDirectory):
 		baseFileName = inputClassImage.name[0:len(inputClassImage.name) - 4]
-		outputFileName = baseFileName + '_aug_' + str(9) + '.jpg'
+		outputFileName = baseFileName + '_mirror.jpg'
 		if os.path.exists(os.path.join(outputClassDirectory, outputFileName)):
 			continue
 		gc.collect()
 		# we first load the image
-		image = load_img(inputClassImage.path)
+		#image = load_img(inputClassImage.path)
+		image = Image.open(inputClassImage.path)
 		# we converting the image which is in PIL format into the numpy array, so that we can apply deep learning methods
-		dataImage = img_to_array(image)
+		#dataImage = img_to_array(image)
+		mirrorImage = image.transpose(method=Image.Transpose.FLIP_LEFT_RIGHT)
+		outputFileName = baseFileName + '_mirror.jpg'
+		mirrorImage.save(os.path.join(outputClassDirectory, outputFileName))
 		image.close()
+		mirrorImage.close()
 		# print(dataImage)
 		# expanding dimension of the load image
-		imageNew = expand_dims(dataImage, 0)
+		#imageNew = expand_dims(dataImage, 0)
 		# now here below we creating the object of the data augmentation class
-		imageDataGen = ImageDataGenerator(zoom_range=0.4, horizontal_flip=True)
+		#imageDataGen = ImageDataGenerator(zoom_range=0.4, horizontal_flip=True)
 		#imageDataGen = ImageDataGenerator(horizontal_flip=True)
 		# because as we alreay load image into the memory, so we are using flow() function, to apply transformation
-		iterator = imageDataGen.flow(imageNew, batch_size=1)
+		#iterator = imageDataGen.flow(imageNew, batch_size=1)
 		# below we generate augmented images and plotting for visualization
-		for i in range(10):
+		"""
+		for i in range(1):
 			# generating images of each batch
 			batch = iterator.next()
 			# again we convert back to the unsigned integers value of the image for viewing
@@ -45,7 +52,7 @@ def produce_images(className):
 			outputFileName = baseFileName + '_aug_' + str(i) + '.jpg'
 			image.save(os.path.join(outputClassDirectory, outputFileName))
 			image.close()
-			
+		"""	
 
 
 directory = 'D:/JukidoStanceImages/jukido_stances'

@@ -3,13 +3,15 @@ from pickle import TRUE
 from mediapipe_common import *
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
-#classes = ['', 'dai-kokutsu', 'fudo', 'gankaku', 'hangetsu', 'kake', 'kiba', 'kokutsu', 'musubi', 'neko-ashi', 'sanchin', 'seiko', 'seoi-otoshi', 'tsuru-ashi', 'zenkutsu']
-#classes = ['kake']
+
+classes = ['', 'dai-kokutsu', 'fudo', 'gankaku', 'hangetsu', 'kake', 'kiba', 'kokutsu', 'musubi', 'neko-ashi', 'sanchin', 'seiko', 'seoi-otoshi', 'tsuru-ashi', 'zenkutsu']
+#classes = ['fudo', 'gankaku', 'hangetsu', 'kake', 'kiba', 'kokutsu', 'musubi', 'neko-ashi', 'sanchin', 'seiko', 'seoi-otoshi', 'tsuru-ashi', 'zenkutsu']
 #classes = ['fudo', 'seiko', 'sanchin', 'zenkutsu']
 #classes = ['seiko', 'hangetsu', 'dai-kokutsu', 'neko-ashi']
 classes = ['']
-#showPicture = False
+showPicture = False
 showPicture = True
+
 
 for binaryClassName in classes:
 
@@ -67,9 +69,12 @@ for binaryClassName in classes:
                 1: 1.}
     else:
         class_weights = pose_loader.class_weights
+
+
+
     history = model.fit(pose_loader.x_input, pose_loader.y_labels,
                         epochs=1000,
-                        batch_size=8,
+                        batch_size=16,
                         class_weight = class_weights,
                         validation_data = (pose_loader_test.x_input, pose_loader_test.y_labels),
                         callbacks=[checkpoint, earlystopping])

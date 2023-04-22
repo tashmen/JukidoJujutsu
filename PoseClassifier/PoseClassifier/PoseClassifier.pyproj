@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>7dedd645-db15-4058-9fac-b8566006520f</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>mediapipe_test\mediapipe_buildcsv.py</StartupFile>
+    <StartupFile>mediapipe_test\mediapipe_classifier.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -24,15 +24,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="mediapipe_test\dataaugmentation.py" />
+    <Compile Include="mediapipe_test\hyperparametertuning.py" />
     <Compile Include="mediapipe_test\mediapipe_classifier.py" />
     <Compile Include="mediapipe_test\mediapipe_common.py" />
     <Compile Include="mediapipe_test\split_video.py" />
-    <Compile Include="movenet_test\movenet.py" />
     <Compile Include="mediapipe_test\mediapipe_buildcsv.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="mediapipe_test\" />
-    <Folder Include="movenet_test\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
