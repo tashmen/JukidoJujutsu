@@ -150,7 +150,7 @@ function predictPose()
 				textElement.textContent = 'Ambiguous Stance '
 				for(var j = 0; j<stances.length; j++)
 				{
-					textElement.textContent += '\r\n' + labels[stances[j].index] + " (" + Math.ceil(stances[j].value * 100) + "%)";
+					textElement.textContent += '\r\n' + labels[stances[j].index] + " [" + Math.ceil(stances[j].value * 100) + "%]";
 				}
 				textElement.textContent += '\r\n' + 'Predicted: ' + labels[largestIndex] + " (" + Math.ceil(largest * 100) + "%)"
 			}
@@ -159,7 +159,7 @@ function predictPose()
 				textElement.textContent = 'Unknown Stance.  Best guess: '  + labels[largestIndex] + " (" + Math.ceil(largest * 100) + "%)";
 			}
 			else {
-				textElement.textContent = labels[largestIndex] + " (" + Math.ceil(largest * 100) + "%)" + "[" + Math.ceil(matchValue * 100) + "%]";
+				textElement.textContent = 'Matched Stance: ' + labels[largestIndex] + " (" + Math.ceil(largest * 100) + "%)" + "[" + Math.ceil(matchValue * 100) + "%]";
 			}
 		}
 		else
