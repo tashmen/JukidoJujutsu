@@ -8,7 +8,7 @@ Fundamentally the application contains two parts:
 1. **PoseClassifier** - Python Project
 2. **Stances App** - Basic HTML/Javascript web application
 
-The web application is currently deployed on a free server located here: http://jukidojujutsu.42web.io/
+The web application is currently deployed on a free server located here: https://jukidojujutsu.42web.io/
 
 ## Pose Classifier
 The pose classifier contains a number of python scripts that can be executed individually.  Each script performs a particular transformation that ultimately converts videos into a neural network that can predict stances.
