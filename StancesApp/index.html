@@ -13,12 +13,12 @@
   
   
   <!-- Require the peer dependencies of pose-detection. -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@4.4.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter@4.4.0"></script>
 
 <!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite/dist/tf-tflite.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@4.4.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite@0.0.1-alpha.9/dist/tf-tflite.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
   
@@ -97,6 +97,7 @@ function predictPose()
 	}
 	
 	// Run the inference.
+	
 	var tensor = tf.tensor([modelInput]);
 	var labels = poseList;
 	var prediction = tfliteModel.predict(tensor);
@@ -327,7 +328,7 @@ for(var i = 0; i<poseList.length; i++)
 	
 	stanceSelect.options[stanceSelect.options.length] = new Option(poseList[i], i);
 }
-
+await tf.ready();
 </script>
 
 <style>
