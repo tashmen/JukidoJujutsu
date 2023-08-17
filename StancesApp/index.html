@@ -220,7 +220,7 @@ var interval;
 export function runScript(){
 	camera.start();
 	
-	textElement.textContent = "Loading..."
+	setLoading();
 	
 	if(typeof(interval) != 'undefined')
 		clearInterval(interval);
@@ -300,6 +300,17 @@ function hideYellowBorder(element){
 	element.classList.remove('yellowborder');
 }
 
+function setLoading(){
+	if(loadCounter < poseList.length)
+	{
+		textElement.textContent = "Loading Models...  (" + loadCounter + "/" + poseList.length + ")";
+	}
+	else 
+	{
+		textElement.textContent = "Starting Camera and Initializing Predictions...";
+	}
+}
+
 async function loadFile(url) {
   try {
     const response = await fetch(url);
@@ -316,11 +327,17 @@ var poseList = poses.split('\r\n');
 stanceListElement.textContent = "Stances considered: " + poseList.join(', ');
 
 var binaryModels = {};
+var loadCounter = 0;
 for(var i = 0; i<poseList.length; i++)
 {
 	var modelLoader = function (modelName){
 		tflite.loadTFLiteModel('tfliteModels/pose_classifier_' + modelName + '.tflite').then(function(model){
 			binaryModels[modelName] = model;
+			loadCounter++;
+			if(textElement.textContent.includes("Loading"))
+			{
+				setLoading();
+			}
 		});
 	}
 	
