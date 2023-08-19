@@ -34,8 +34,7 @@ var keypoints;
 var enableOverlay = false;
 var stanceSelect = document.getElementById('stanceSelect');
 var stanceImage = document.getElementById('stanceImage');
-var stanceMirrorImageCheckbox = document.getElementById('mirrorimagecheckbox');
-var stanceMirrorImageCheckboxLabel = document.getElementById('mirrorimagecheckboxlabel');
+var stanceMirrorImageDiv = document.getElementById('showModeDiv');
 var appMode = 'tell';
 var showModeSelectedStance = 0;
 var showStanceCorrectCounter = 0;
@@ -272,18 +271,14 @@ export function changeMode(mode){
 	appMode = mode;
 	textElement.textContent = "";
 	if(appMode == 'show'){
-		show(stanceSelect);
+		show(showModeDiv);
 		show(stanceImage);
-		show(stanceMirrorImageCheckbox);
-		show(stanceMirrorImageCheckboxLabel);
 		hide(stanceList);
 		stanceSelection(stanceSelect.options[stanceSelect.selectedIndex].value)
 	}
 	else if(appMode == 'tell'){
-		hide(stanceSelect);
+		hide(showModeDiv);
 		hide(stanceImage);
-		hide(stanceMirrorImageCheckbox);
-		hide(stanceMirrorImageCheckboxLabel);
 		show(stanceList);
 	}
 }
@@ -457,10 +452,13 @@ await tf.ready();
 				<option value="tell">Tell - Predict the stance</option>
 				<option value="show">Show - Match the stance</option>
 			</select>
-			<select id="stanceSelect" onchange="stanceSelection(this.options[this.selectedIndex].value)" class="hidden">
-			</select><br>
-			<input type="checkbox" id="mirrorimagecheckbox" onClick="toggleMirrorImage(this.checked)" value="1" class="hidden">
-			<label id="mirrorimagecheckboxlabel" for="mirrorimagecheckbox" class="hidden">Mirror Image</label>
+			<div id="showModeDiv" class="hidden">
+				<select id="stanceSelect" onchange="stanceSelection(this.options[this.selectedIndex].value)">
+				</select>
+				<br>
+				<input type="checkbox" id="mirrorimagecheckbox" onClick="toggleMirrorImage(this.checked)" value="1">
+				<label id="mirrorimagecheckboxlabel" for="mirrorimagecheckbox">Mirror Image</label>
+			</div>
 		</div>
 		
 		<div class="container">
