@@ -34,9 +34,13 @@ var keypoints;
 var enableOverlay = false;
 var stanceSelect = document.getElementById('stanceSelect');
 var stanceImage = document.getElementById('stanceImage');
+var stanceMirrorImageCheckbox = document.getElementById('mirrorimagecheckbox');
+var stanceMirrorImageCheckboxLabel = document.getElementById('mirrorimagecheckboxlabel');
 var appMode = 'tell';
 var showModeSelectedStance = 0;
 var showStanceCorrectCounter = 0;
+var mirrorCamera = false;
+var mirrorImage = false;
 
 function onResults(results) {
   if (!results.poseLandmarks) {
@@ -48,6 +52,10 @@ function onResults(results) {
   canvasElement.height = videoElement.videoHeight;
 
   canvasCtx.save();
+  if(mirrorCamera){
+	canvasCtx.scale(-1,1);
+	canvasCtx.translate(canvasElement.width * -1, 0);
+  }
   if(enableOverlay){
 	  canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 	  canvasCtx.drawImage(results.segmentationMask, 0, 0,
@@ -249,7 +257,16 @@ window.changeFacing=changeFacing;
 export function toggleOverlay(checked){
 	enableOverlay = checked;
 }
+export function toggleMirrorCamera(checked){
+	mirrorCamera = checked;
+}
+export function toggleMirrorImage(checked){
+	mirrorImage = checked;
+	setMirror();
+}
 window.toggleOverlay=toggleOverlay;
+window.toggleMirrorCamera = toggleMirrorCamera;
+window.toggleMirrorImage = toggleMirrorImage;
 
 export function changeMode(mode){
 	appMode = mode;
@@ -257,12 +274,16 @@ export function changeMode(mode){
 	if(appMode == 'show'){
 		show(stanceSelect);
 		show(stanceImage);
+		show(stanceMirrorImageCheckbox);
+		show(stanceMirrorImageCheckboxLabel);
 		hide(stanceList);
 		stanceSelection(stanceSelect.options[stanceSelect.selectedIndex].value)
 	}
 	else if(appMode == 'tell'){
 		hide(stanceSelect);
 		hide(stanceImage);
+		hide(stanceMirrorImageCheckbox);
+		hide(stanceMirrorImageCheckboxLabel);
 		show(stanceList);
 	}
 }
@@ -280,6 +301,18 @@ function show(element){
 }
 function hide(element){
 	element.classList.add('hidden');
+}
+function setMirror(){
+	if(mirrorImage){
+		addMirror();
+	}
+	else removeMirror();
+}
+function addMirror(){
+	stanceImage.classList.add('mirror');
+}
+function removeMirror(){
+	stanceImage.classList.remove('mirror');
 }
 function showGreenBorder(element){
 	element.classList.add('greenborder');
@@ -349,6 +382,12 @@ await tf.ready();
 </script>
 
 <style>
+
+#jukidostances .mirror {
+  -webkit-transform: scaleX(-1);
+  transform: scaleX(-1);
+}
+
 #jukidostances p, #jukidostances button, #jukidostances select, #jukidostances{
 	font-size:32px
 }
@@ -411,13 +450,17 @@ await tf.ready();
 				</select>
 				<input type="checkbox" id="overlaycheckbox" onClick="toggleOverlay(this.checked)" value="1">
 				<label for="overlaycheckbox">Show Overlay</label><br>
+				<input type="checkbox" id="mirrorcheckbox" onClick="toggleMirrorCamera(this.checked)" value="1">
+				<label for="mirrorcheckbox">Mirror Camera</label><br>
 			</div>
 			<select class="block" onchange="changeMode(this.options[this.selectedIndex].value)">
 				<option value="tell">Tell - Predict the stance</option>
 				<option value="show">Show - Match the stance</option>
 			</select>
 			<select id="stanceSelect" onchange="stanceSelection(this.options[this.selectedIndex].value)" class="hidden">
-			</select>
+			</select><br>
+			<input type="checkbox" id="mirrorimagecheckbox" onClick="toggleMirrorImage(this.checked)" value="1" class="hidden">
+			<label id="mirrorimagecheckboxlabel" for="mirrorimagecheckbox" class="hidden">Mirror Image</label>
 		</div>
 		
 		<div class="container">
