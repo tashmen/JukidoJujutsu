@@ -369,9 +369,15 @@ for(var i = 0; i<poseList.length; i++)
 		});
 	}
 	
+	
+	
 	modelLoader(poseList[i]);
 	
 	stanceSelect.options[stanceSelect.options.length] = new Option(poseList[i], i);
+}
+for(var i = 0; i<poseList.length; i++)
+{
+	loadFile("senseiStances/tiny/sensei_"+poseList[i]+".jpg");
 }
 await tf.ready();
 </script>
