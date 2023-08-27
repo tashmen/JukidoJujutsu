@@ -33,7 +33,8 @@ All images used to train the models are not included for privacy reasons. (Speci
 * The app is on a free server which has a 50,000 hit limit per day
   * I assume that it will display some error message if we hit the limit and people would need to wait until the following day
 * For best results
-  * Use Chrome - other browsers like Safari may not be able to read the camera 
+  * Use Chrome - other browsers like Safari may not be able to read the camera
+    * Ensure that you have the option for 'Use hardware acceleration when available' enabled otherwise the app may use 100% cpu
   * Stand more or less facing the camera in the same orientation as the images in the app
     * The app can to some degree tell stances at slight angles, but the accuracy is not as good
     * The app will not recognize opposite facing stances (e.g. left vs right zenkutsu)
