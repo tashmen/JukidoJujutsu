@@ -4,10 +4,10 @@ from mediapipe_common import *
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
 
-classes = ['', 'dai-kokutsu', 'fudo', 'gankaku', 'hangetsu', 'kake', 'kiba', 'kokutsu', 'musubi', 'neko-ashi', 'sanchin', 'seiko', 'seoi-otoshi', 'tsuru-ashi', 'zenkutsu']
-#classes = ['fudo', 'gankaku', 'hangetsu', 'kake', 'kiba', 'kokutsu', 'musubi', 'neko-ashi', 'sanchin', 'seiko', 'seoi-otoshi', 'tsuru-ashi', 'zenkutsu']
-#classes = ['fudo', 'seiko', 'sanchin', 'zenkutsu']
-#classes = ['seiko', 'hangetsu', 'dai-kokutsu', 'neko-ashi']
+classes = ['', 'dai-kokutsu', 'fudo', 'gankaku', 'hangetsu', 'kake', 'kiba', 'kokutsu', 'musubi', 'neko-ashi', 'sanchin', 'shiko', 'seoi-otoshi', 'tsuru-ashi', 'zenkutsu']
+#classes = ['fudo', 'gankaku', 'hangetsu', 'kake', 'kiba', 'kokutsu', 'musubi', 'neko-ashi', 'sanchin', 'shiko', 'seoi-otoshi', 'tsuru-ashi', 'zenkutsu']
+#classes = ['fudo', 'shiko', 'sanchin', 'zenkutsu']
+#classes = ['shiko', 'hangetsu', 'dai-kokutsu', 'neko-ashi']
 classes = ['']
 showPicture = False
 showPicture = True
